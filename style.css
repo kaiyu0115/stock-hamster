@@ -1,0 +1,97 @@
+/* 基礎設定與配色 */
+:root {
+    --bg-color: #F7EBD3;
+    --primary: #D18A50;
+    --text: #4A3F35;
+    --card-bg: #FFFFFF;
+}
+
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 20px;
+}
+
+#app {
+    width: 100%;
+    max-width: 500px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.5s; }
+
+/* === 新增：共用圖片樣式 === */
+.screen-image {
+    width: 100%;
+    height: auto;
+    max-height: 250px; /* 限制最高高度，避免圖片把按鈕擠出手機畫面 */
+    object-fit: cover; /* 讓圖片填滿容器但維持比例不變形 */
+    border-radius: 12px; /* 圓角設計，呼應整體可愛清新風 */
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 加上微陰影增加立體感 */
+}
+/* ========================= */
+
+button {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    transition: transform 0.2s, background-color 0.2s, opacity 0.2s;
+}
+button:hover { transform: scale(1.02); }
+button:active { transform: scale(0.95); opacity: 0.8; }
+button.selected { background-color: #A37A57; transform: scale(0.98); }
+
+#progress-bar {
+    height: 8px; background: #EEE; border-radius: 4px; margin-bottom: 20px;
+}
+#progress-fill {
+    height: 100%; background: var(--primary); width: 0%; border-radius: 4px; transition: width 0.3s;
+}
+
+/* 原生廣告區塊 */
+.native-ad-card {
+    margin: 25px 0;
+    padding: 20px;
+    background: linear-gradient(135deg, #FFF9F0, #FFF0D9);
+    border: 1px solid #F5D3A9;
+    border-radius: 12px;
+    text-align: left;
+    box-shadow: 0 4px 15px rgba(209, 138, 80, 0.15);
+}
+.ad-tag {
+    font-size: 12px;
+    color: #A37A57;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+#ad-title { margin: 0 0 10px 0; color: #4A3F35; font-size: 18px; }
+#ad-desc { margin: 0 0 15px 0; color: #6E5C4F; font-size: 14px; line-height: 1.5; }
+.ad-btn {
+    display: inline-block;
+    background: #D18A50;
+    color: #FFF;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+.ad-btn:hover { background: #B87640; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
