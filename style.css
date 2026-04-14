@@ -118,6 +118,7 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
 #radar-chart-container {
     width: 100%;
     max-width: 350px;
+    height: 300px;
     margin: 20px auto;
     position: relative;
 }

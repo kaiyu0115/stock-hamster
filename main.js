@@ -223,25 +223,33 @@ document.getElementById('download-btn').addEventListener('click', () => {
     // 確保回到頂部避免 html2canvas 截圖位移
     window.scrollTo(0, 0);
     
-    html2canvas(document.getElementById('capture-area'), {
-        scale: 2, 
-        useCORS: true, 
-        backgroundColor: '#FFF6EC'
-    }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'hamster_result.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+    // 稍微延遲讓 DOM 確保已更新為產生中的文字狀態
+    setTimeout(() => {
+        html2canvas(document.getElementById('capture-area'), {
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#FFF6EC'
+        }).then(canvas => {
+            try {
+                const link = document.createElement('a');
+                link.download = 'hamster_result.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            } catch (e) {
+                console.error("toDataURL failed", e);
+                alert("瀏覽器安全限制阻止了直接下載，請您直接對畫面截圖分享！");
+            }
 
-        btn.textContent = '📥 儲存專屬結果圖';
-        btn.disabled = false;
-        if(typeof gtag !== 'undefined') gtag('event', 'download_result');
-    }).catch(err => {
-        console.error('截圖失敗', err);
-        alert('截圖失敗，請重新嘗試。');
-        btn.textContent = '📥 儲存專屬結果圖';
-        btn.disabled = false;
-    });
+            btn.textContent = '📥 儲存專屬結果圖';
+            btn.disabled = false;
+            if(typeof gtag !== 'undefined') gtag('event', 'download_result');
+        }).catch(err => {
+            console.error('截圖失敗', err);
+            alert('截圖失敗，這可能是您的設備暫時不支援，請使用內建截圖功能！');
+            btn.textContent = '📥 儲存專屬結果圖';
+            btn.disabled = false;
+        });
+    }, 150);
 });
 
 // LINE 分享
@@ -343,8 +351,14 @@ function showResult() {
     document.getElementById('result-desc').textContent = res.desc;
     document.getElementById('result-image').src = res.imgUrl;
 
+    // 關鍵修復：必須先切換畫面解除 display:none，才能繪製 Chart.js
+    switchScreen('result');
+
     if(res.stats) {
-        renderRadarChart(res.stats);
+        // 延遲繪製圖表，確保 DOM 佈局已完成
+        setTimeout(() => {
+            renderRadarChart(res.stats);
+        }, 50);
     }
 
     // 將結果與廣告曝光送進 DataLayer，分析哪種老鼠的廣告點擊率最高
@@ -353,8 +367,6 @@ function showResult() {
             'ad_type': finalType 
         });
     }
-
-    switchScreen('result');
 }
 
 let radarChartInstance = null;
