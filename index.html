@@ -20,7 +20,15 @@
     <meta property="og:type" content="website">
     <link rel="stylesheet" href="style.css">
     
+    <!-- 引入 Chart.js for 雷達圖 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- 引入 html2canvas for 圖片下載 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4933768476675870"
+     crossorigin="anonymous"></script>
 </head>
 <body>
     <div id="app">
@@ -39,9 +47,25 @@
         </div>
 
         <div id="result-screen" class="screen">
-            <h2 id="result-title"></h2>
-            <img id="result-image" src="" alt="測驗結果圖片" class="screen-image">
-            <p id="result-desc"></p>
+            <div id="capture-area">
+                <h2 id="result-title"></h2>
+                <div id="result-tags" class="tags-container"></div>
+                <img id="result-image" src="" alt="測驗結果圖片" class="screen-image">
+                <p id="result-desc"></p>
+                
+                <div id="radar-chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div id="watermark">測出你的韭菜基因 👉 股票倉鼠測驗</div>
+            </div>
+
+            <button id="download-btn" style="background-color: #E68A00; margin-bottom: 15px;">📥 儲存專屬結果圖</button>
+            <button id="go-ad-btn">領取專屬生存指南 👉</button>
+        </div>
+
+        <div id="ad-screen" class="screen">
+            <h2>🎁 專屬你的生存指南</h2>
+            <p>在分享截圖給朋友炫耀之前，別忘了帶走我們為你特製的心法：</p>
             
             <div id="dynamic-ad-container" class="native-ad-card">
                 <div class="ad-tag">🐹 倉鼠生存指南 (贊助)</div>
@@ -50,8 +74,12 @@
                 <a href="#" id="ad-link" target="_blank" class="ad-btn">立即查看</a>
             </div>
 
-            <button id="share-btn">分享我的倉鼠結果</button>
-            <button id="restart-btn">重新測驗</button>
+            <div class="social-share-group">
+                <button id="share-line-btn" class="social-btn line-btn">LINE</button>
+                <button id="share-fb-btn" class="social-btn fb-btn">Facebook</button>
+                <button id="share-copy-btn" class="social-btn copy-btn">複製連結</button>
+            </div>
+            <button id="restart-btn" style="background-color: #8C7A6B; margin-top: 15px;">重新測驗</button>
         </div>
     </div>
     <script src="main.js"></script>

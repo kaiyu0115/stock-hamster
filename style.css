@@ -95,3 +95,71 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
 .ad-btn:hover { background: #B87640; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 標籤容器與徽章樣式 */
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+.tag-badge {
+    background: rgba(209, 138, 80, 0.12);
+    color: #9C6A43;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1.5px solid #D18A50;
+    box-shadow: 0 2px 5px rgba(209, 138, 80, 0.1);
+}
+
+#radar-chart-container {
+    width: 100%;
+    max-width: 350px;
+    margin: 20px auto;
+    position: relative;
+}
+
+#capture-area {
+    background-color: #FFF6EC; /* ensure solid bg for export */
+    padding: 20px 10px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+#watermark {
+    font-size: 12px;
+    color: #A39180;
+    text-align: center;
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.social-share-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.social-btn {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+}
+
+.line-btn { background-color: #06C755; }
+.fb-btn { background-color: #1877F2; }
+.copy-btn { background-color: #6E5C4F; }
