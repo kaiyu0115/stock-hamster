@@ -38,6 +38,7 @@ body {
     border-radius: 12px; /* 圓角設計，呼應整體可愛清新風 */
     margin-bottom: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 加上微陰影增加立體感 */
+    transition: opacity 0.2s ease;
 }
 /* ========================= */
 

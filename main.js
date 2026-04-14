@@ -296,7 +296,13 @@ function renderQuestion() {
     const optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = '';
     
-    document.getElementById('question-image').src = qData.imgUrl;
+    // 圖片載入視覺優化：先降低透明度，載入完成後再顯示，避免看到上一題的殘影
+    const imgEl = document.getElementById('question-image');
+    imgEl.style.opacity = '0.3';
+    imgEl.src = qData.imgUrl;
+    imgEl.onload = () => {
+        imgEl.style.opacity = '1';
+    };
 
     qData.options.forEach(opt => {
         const btn = document.createElement('button');
@@ -413,3 +419,17 @@ function renderRadarChart(statsArray) {
         }
     });
 }
+
+// 預載圖片以防止切換時卡頓 (在背景默默執行)
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        questions.forEach(q => {
+            const img = new Image();
+            img.src = q.imgUrl;
+        });
+        Object.keys(resultsData).forEach(key => {
+            const img = new Image();
+            img.src = resultsData[key].imgUrl;
+        });
+    }, 1000); // 延遲 1 秒，不要跟首頁大圖或 Google Ads 搶網路資源
+});
