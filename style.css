@@ -16,6 +16,12 @@ body {
     padding: 20px;
 }
 
+/* 防禦性 CSS：防止擴充功能層級遮罩干擾點擊 */
+[class*="immersive-translate"],
+[id*="immersive-translate"] {
+    pointer-events: none !important;
+}
+
 #app {
     width: 100%;
     max-width: 500px;
@@ -24,6 +30,8 @@ body {
     padding: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     text-align: center;
+    position: relative; /* 防禦性：確立疊加基準 */
+    z-index: 10;
 }
 
 .screen { display: none; }
@@ -53,6 +61,8 @@ button {
     width: 100%;
     margin-bottom: 10px;
     transition: transform 0.2s, background-color 0.2s, opacity 0.2s;
+    position: relative; /* 防禦性：避免按鈕被底層透明層遮擋 */
+    z-index: 20;
 }
 button:hover { transform: scale(1.02); }
 button:active { transform: scale(0.95); opacity: 0.8; }

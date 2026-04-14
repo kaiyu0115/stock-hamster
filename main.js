@@ -334,10 +334,16 @@ function showResult() {
         finalType = "SSR";
     }
     const targetAd = adConfigs[finalType];
-    document.getElementById('ad-title').textContent = targetAd.title;
-    document.getElementById('ad-desc').textContent = targetAd.desc;
-    document.getElementById('ad-link').href = targetAd.link;
-    document.getElementById('ad-link').textContent = targetAd.btnText;
+    try {
+        if(targetAd) {
+            document.getElementById('ad-title').textContent = targetAd.title;
+            document.getElementById('ad-desc').textContent = targetAd.desc;
+            document.getElementById('ad-link').href = targetAd.link;
+            document.getElementById('ad-link').textContent = targetAd.btnText;
+        }
+    } catch (e) {
+        console.warn("[容錯機制] 廣告腳本或 DOM 被第三方套件攔截，已忽略該錯誤。", e);
+    }
     
     const res = resultsData[finalType];
     document.getElementById('result-title').textContent = res.title;
@@ -378,46 +384,55 @@ function showResult() {
 let radarChartInstance = null;
 
 function renderRadarChart(statsArray) {
-    const ctx = document.getElementById('radarChart').getContext('2d');
-    
-    // 銷毀舊圖表以避免重疊
-    if (radarChartInstance) {
-        radarChartInstance.destroy();
-    }
-    
-    radarChartInstance = new Chart(ctx, {
-        type: 'radar',
-        data: {
-            labels: ['技術力', '執行力', '信仰力', '賭徒值', '盯盤率', '強運度'],
-            datasets: [{
-                label: '能力分佈',
-                data: statsArray,
-                backgroundColor: 'rgba(209, 138, 80, 0.4)',
-                borderColor: '#D18A50',
-                pointBackgroundColor: '#D18A50',
-                borderWidth: 2,
-                pointRadius: 3
-            }]
-        },
-        options: {
-            scales: {
-                r: {
-                    min: 0,
-                    max: 5,
-                    ticks: { display: false, stepSize: 1 },
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                    angleLines: { color: 'rgba(0,0,0,0.1)' },
-                    pointLabels: {
-                        font: { size: 12, family: "'Noto Sans TC', sans-serif" },
-                        color: '#4A3F35'
-                    }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
+    try {
+        const canvas = document.getElementById('radarChart');
+        if (!canvas) {
+            console.warn("[容錯機制] 找不到 Chart Canvas，可能已被第三方擴充功能阻擋。");
+            return;
         }
-    });
+        const ctx = canvas.getContext('2d');
+        
+        // 銷毀舊圖表以避免重疊
+        if (radarChartInstance) {
+            radarChartInstance.destroy();
+        }
+        
+        radarChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['技術力', '執行力', '信仰力', '賭徒值', '盯盤率', '強運度'],
+                datasets: [{
+                    label: '能力分佈',
+                    data: statsArray,
+                    backgroundColor: 'rgba(209, 138, 80, 0.4)',
+                    borderColor: '#D18A50',
+                    pointBackgroundColor: '#D18A50',
+                    borderWidth: 2,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 5,
+                        ticks: { display: false, stepSize: 1 },
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        angleLines: { color: 'rgba(0,0,0,0.1)' },
+                        pointLabels: {
+                            font: { size: 12, family: "'Noto Sans TC', sans-serif" },
+                            color: '#4A3F35'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    } catch (error) {
+        console.error("[容錯機制] Chart.js 繪圖過程遭中斷，已優雅降級維持主要介面顯示。", error);
+    }
 }
 
 // 預載圖片以防止切換時卡頓 (在背景默默執行)
