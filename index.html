@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-20B0K9TJWS"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-20B0K9TJWS');
     </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>【超準心理測驗】你是哪種操盤倉鼠？</title>
+    <link rel="icon" type="image/png" href="images/hamster.png">
+    <link rel="apple-touch-icon" href="images/hamster.png">
     
     <!-- Open Graph SEO 標籤 -->
     <meta property="og:title" content="【超準心理測驗】你是哪種操盤倉鼠？">
@@ -33,7 +37,12 @@
 <body>
     <div id="app">
         <div id="start-screen" class="screen active">
-            <h1>【超準心理測驗】<br>你是哪種操盤倉鼠？</h1>
+            <h1 style="position:relative; margin-top:35px;">
+                <div class="floating-hamster-wrapper start-hamster">
+                    <img src="images/hamster.png" class="floating-hamster" alt="">
+                </div>
+                【超準心理測驗】<br>你是哪種操盤倉鼠？
+            </h1>
             <img src="images/home-cover.png" alt="操盤倉鼠主視覺" class="screen-image">
             <p>別人抱著 AI 概念股早就在杜拜看豪宅，你還在籠子裡死命跑滾輪？<br><br>透過這 10 個靈魂拷問，測出你的真實韭菜基因！</p>
             <button id="start-btn">👉 顫抖著點開測驗 📉</button>
@@ -48,6 +57,10 @@
 
         <div id="result-screen" class="screen">
             <div id="capture-area">
+                <div class="floating-hamster-wrapper result-hamster" id="random-jumper">
+                    <div class="hamster-tooltip">你抓不到我~</div>
+                    <img src="images/hamster.png" class="swinging-hamster" alt="">
+                </div>
                 <h2 id="result-title"></h2>
                 <div id="result-tags" class="tags-container"></div>
                 <img id="result-image" src="" alt="測驗結果圖片" class="screen-image">
@@ -68,10 +81,10 @@
             <p>在分享截圖給朋友炫耀之前，別忘了帶走我們為你特製的心法：</p>
             
             <div id="dynamic-ad-container" class="native-ad-card">
-                <div class="ad-tag">🐹 倉鼠生存指南 (贊助)</div>
-                <h3 id="ad-title"></h3>
-                <p id="ad-desc"></p>
-                <a href="#" id="ad-link" target="_blank" class="ad-btn">立即查看</a>
+                <div class="ad-tag">🐹 倉鼠專屬推薦 (贊助)</div>
+                <div id="ad-content-wrapper">
+                    <!-- 動態由 JavaScript 載入 Banner 或 Text 廣告 -->
+                </div>
             </div>
 
             <div class="social-share-group">
@@ -82,6 +95,17 @@
             <button id="restart-btn" style="background-color: #8C7A6B; margin-top: 15px;">重新測驗</button>
         </div>
     </div>
+
+    <!-- 連續 3 次測驗彩蛋 Modal -->
+    <div id="easter-egg-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>🐹 倉鼠的悄悄話</h3>
+            <p>你已經連續測這麼多次囉？是不是想找什麼隱藏的彩蛋？<br><br>先停下來休息一下，來看看這個專屬推薦吧！</p>
+            <div id="modal-ad-container"></div>
+            <button id="close-modal-btn">關閉並看結果</button>
+        </div>
+    </div>
+
     <script src="main.js"></script>
 </body>
 </html>

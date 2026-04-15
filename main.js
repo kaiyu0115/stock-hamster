@@ -1,4 +1,75 @@
-// 題庫與計分邏輯 (此處僅示範前2題，可將上面發想的10題填入)
+// === 背景滑鼠/手指互動光斑 ===
+const updateMousePos = (e) => {
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    document.body.style.setProperty('--mouse-x', `${x}px`);
+    document.body.style.setProperty('--mouse-y', `${y}px`);
+};
+window.addEventListener('mousemove', updateMousePos);
+window.addEventListener('touchmove', updateMousePos, {passive: true});
+
+// 預設螢幕中心
+if(typeof window !== 'undefined') {
+    document.body.style.setProperty('--mouse-x', `${window.innerWidth/2}px`);
+    document.body.style.setProperty('--mouse-y', `${window.innerHeight/2}px`);
+}
+
+// === 跳躍倉鼠邏輯與捕捉彩蛋 ===
+const jumper = document.getElementById('random-jumper');
+let jumperInterval = null;
+let hamsterCatchCount = 0; // 捕捉計數器
+
+function moveJumper() {
+    if (!jumper) return;
+    const area = document.getElementById('capture-area');
+    if (!area) return;
+    const maxX = area.offsetWidth - 60;
+    const maxY = area.offsetHeight - 60;
+    if (maxX <= 0 || maxY <= 0) return;
+    
+    // 生成隨機跳躍座標
+    const randomX = Math.floor(Math.random() * maxX);
+    const randomY = Math.floor(Math.random() * maxY);
+    
+    jumper.style.left = `${randomX}px`;
+    jumper.style.top = `${randomY}px`;
+}
+
+// 開啟隨機廣告彩蛋邏輯
+function openRandomAdEgg() {
+    const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
+    let adUrl = '#';
+    if(randomAd.type === 'text' && randomAd.link) {
+        adUrl = randomAd.link;
+    } else if(randomAd.type === 'banner' && randomAd.html) {
+        const match = randomAd.html.match(/href=['"](.*?)['"]/);
+        if(match && match[1]) adUrl = match[1];
+    }
+    
+    if(typeof gtag !== 'undefined') {
+        gtag('event', 'catch_hamster_ad', {
+            'ad_url': adUrl,
+            'event_category': 'Easter_Egg'
+        });
+    }
+    window.open(adUrl, '_blank');
+}
+
+if(jumper) {
+    // 點擊/觸摸立刻閃避
+    jumper.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        hamsterCatchCount++;
+        if(hamsterCatchCount >= 3) {
+            hamsterCatchCount = 0;
+            openRandomAdEgg();
+        } else {
+            moveJumper();
+        }
+    });
+}
+
+// 題庫與計分邏輯
 const questions = [
     {
         q: "看到大盤暴跌 500 點，你的第一反應是？",
@@ -183,18 +254,22 @@ Object.keys(resultsData).forEach(key => {
     if(key !== "SSR") scores[key] = 0;
 });
 
-const adConfigs = {
-    "A": { title: "跑輪跑得好累？讓機器人幫你跑！", desc: "盯盤盯到眼睛痛，手續費扣到心痛。試試全台最多人用的量化交易機器人，設定好策略，睡覺也在幫你賺水錢。", link: "#", btnText: "了解自動化交易" },
-    "B": { title: "你的瓜子放著生灰塵？", desc: "既然都不賣，不如讓資產自己長大！開立高利活存數位帳戶，或是申購穩定配息 ETF，把時間價值最大化。", link: "#", btnText: "領取高利活存優惠" },
-    "C": { title: "別再當山頂上的吹風少年", desc: "總是買在最高點？你需要的是紀律！來看看這堂萬人好評的「K線實戰籌碼課」，學會看懂主力動向，拒當接盤俠。", link: "#", btnText: "查看課程試聽" },
-    "D": { title: "這裡的槓桿，絕對合你的胃口", desc: "喜歡一把定輸贏的快感？與其在股市裡被大戶玩，不如來這裡大顯身手。登入就送發財金，今晚的加菜金自己贏！", link: "#", btnText: "領取新手發財金" },
-    "E": { title: "突破支撐壓力，然後呢？", desc: "畫線畫得再美，不如紀律執行。推薦這款專業級看盤軟體，自訂警示功能，不漏接任何訊號。", link: "#", btnText: "免費試用專業版" },
-    "F": { title: "高股息還是高陷阱？", desc: "別掉進左手換右手的陷阱！我們為您嚴選連續 10 年填息的「尊爵存股組合」，穩穩領息不怕跌。", link: "#", btnText: "查看高填息名單" },
-    "G": { title: "反向指標也能賺？", desc: "既然自己買什麼跌什麼，不如看看高手怎麼操作。加入 VIP 籌碼觀察室，跟著主力一起動作。", link: "#", btnText: "解密主力籌碼" },
-    "H": { title: "既然無聊，那來點樂子吧？", desc: "投資交給指數，生活交給自己。最新上映的強檔電影票券優惠中，快帶家人一起去看！", link: "#", btnText: "購買優惠電影票" },
-    "I": { title: "東山再起，從零開始", desc: "本金歸零沒關係，哪裡跌倒哪裡站起來。小額信貸專案，首期超低利率，助您重返榮耀（警語：謹慎理財）。", link: "#", btnText: "評估貸款額度" },
-    "SSR": { title: "大佬，是時候享受人生了", desc: "交易只是日常，生活才是主軸。為自己安排一趟頂級的北海道溫泉之旅，把賺來的數字變成真實的回憶。", link: "#", btnText: "查看頂級行程" }
-};
+// === 隨機廣告庫 (供未來擴充) ===
+const adsList = [
+    {
+        type: 'banner',
+        html: `<p style='padding:0;margin: 5px 0;color:#ff0000;'><a href='https://adcenter.conn.tw/3QTuv?uid1=banner' target='_blank' style='display:inline-block;float:none;padding:0;margin:5px 0;color:#ff0000;text-decoration: none;'><img style='display:inline;border:0;max-width:100%;width:500px;height:500px;' src='https://img.oeya.com/images/202503/1741011389297161392.jpg'/></a></p>
+<img src="https://adcenter.conn.tw/track/oeya_url_image.php?key=d27a3aba0ef9bebb509838160af0d156" style="height:1px;width:1px;border:0" />`
+    },
+    {
+        type: 'text',
+        title: "精選推薦工具",
+        desc: "別人抱著概念股早就在杜拜看豪宅？立即查看精選推薦，開始改變！",
+        link: "https://easymall.co/3QTvp?uid1=link",
+        btnText: "立即查看專屬優惠 👉"
+    }
+    // 您可以在這裡持續新增更多不同廠商的廣告區塊...
+];
 
 // DOM 元素
 const screens = {
@@ -206,8 +281,67 @@ const screens = {
 
 // 綁定事件
 document.getElementById('start-btn').addEventListener('click', startQuiz);
-document.getElementById('restart-btn').addEventListener('click', () => location.reload());
-document.getElementById('go-ad-btn').addEventListener('click', () => switchScreen('ad'));
+document.getElementById('restart-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'click_restart', { 'event_category': 'Engagement' });
+    location.reload();
+});
+document.getElementById('go-ad-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'click_go_ad_page', { 'event_category': 'Engagement' });
+    switchScreen('ad');
+});
+
+// === GA4 廣告點擊追蹤 ===
+const adWrapper = document.getElementById('ad-content-wrapper');
+if (adWrapper) {
+    adWrapper.addEventListener('click', (e) => {
+        const linkEl = e.target.closest('a');
+        if (linkEl) {
+            if(typeof gtag !== 'undefined') {
+                gtag('event', 'click_ad_content', {
+                    'ad_url': linkEl.href,
+                    'event_category': 'Monetization'
+                });
+            }
+        }
+    });
+}
+
+// === Session 次數追蹤與彩蛋彈窗 ===
+function checkQuizSessionCount() {
+    let quizCount = parseInt(sessionStorage.getItem('quizCompleteCount') || '0');
+    quizCount++;
+    sessionStorage.setItem('quizCompleteCount', quizCount);
+
+    if (quizCount % 3 === 0) {
+        showEasterEggModal();
+    }
+}
+
+function showEasterEggModal() {
+    const modal = document.getElementById('easter-egg-modal');
+    const adContainer = document.getElementById('modal-ad-container');
+    if(!modal || !adContainer) return;
+
+    const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
+    if (randomAd.type === 'banner') {
+        adContainer.innerHTML = randomAd.html;
+    } else if (randomAd.type === 'text') {
+        adContainer.innerHTML = `
+            <a href="${randomAd.link}" target="_blank" style="display:block; background:#FFF0D9; border:1px solid #F5D3A9; padding:15px; border-radius:8px; text-decoration:none; color:#4A3F35; box-shadow: 0 4px 10px rgba(209,138,80,0.1);">
+                <strong style="display:block; margin-bottom:5px; font-size:16px;">${randomAd.title}</strong>
+                <span style="font-size:14px; color:#6E5C4F; font-weight:bold;">${randomAd.btnText}</span>
+            </a>
+        `;
+    }
+    
+    if(typeof gtag !== 'undefined') gtag('event', 'show_easter_egg_modal', { 'event_category': 'Easter_Egg' });
+    modal.classList.add('show');
+}
+
+// 綁定關閉 Modal 按鈕
+document.getElementById('close-modal-btn')?.addEventListener('click', () => {
+    document.getElementById('easter-egg-modal').classList.remove('show');
+});
 
 function getShareText() {
     return `我測出來是「${document.getElementById('result-title').textContent}」！來測看看你的韭菜基因準不準！ 👉 `;
@@ -254,17 +388,20 @@ document.getElementById('download-btn').addEventListener('click', () => {
 
 // LINE 分享
 document.getElementById('share-line-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'LINE', content_type: 'quiz_result' });
     const text = encodeURIComponent(getShareText() + '\n' + shareUrl);
     window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
 });
 
 // FB 分享 (僅支援帶網址)
 document.getElementById('share-fb-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Facebook', content_type: 'quiz_result' });
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
 });
 
 // 複製連結
 document.getElementById('share-copy-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Copy_Link', content_type: 'quiz_result' });
     const fullText = getShareText() + shareUrl;
     navigator.clipboard.writeText(fullText).then(() => {
         alert('已複製結果與連結，快去貼給朋友吧！');
@@ -333,16 +470,24 @@ function showResult() {
     if (Math.random() < 0.002) {
         finalType = "SSR";
     }
-    const targetAd = adConfigs[finalType];
+    
+    // 【隨機廣告分配邏輯】從 adsList 中隨機抽出一組廣告呈現
+    const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
+    const contentWrapper = document.getElementById('ad-content-wrapper');
     try {
-        if(targetAd) {
-            document.getElementById('ad-title').textContent = targetAd.title;
-            document.getElementById('ad-desc').textContent = targetAd.desc;
-            document.getElementById('ad-link').href = targetAd.link;
-            document.getElementById('ad-link').textContent = targetAd.btnText;
+        if(contentWrapper) {
+            if (randomAd.type === 'banner') {
+                contentWrapper.innerHTML = randomAd.html;
+            } else if (randomAd.type === 'text') {
+                contentWrapper.innerHTML = `
+                    <h3 id="ad-title" style="margin: 0 0 10px 0; color: #4A3F35; font-size: 18px;">${randomAd.title}</h3>
+                    <p id="ad-desc" style="margin: 0 0 15px 0; color: #6E5C4F; font-size: 14px; line-height: 1.5;">${randomAd.desc}</p>
+                    <a href="${randomAd.link}" id="ad-link" target="_blank" class="ad-btn" style="display: inline-block; background: #D18A50; color: #FFF; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; transition: background 0.3s;">${randomAd.btnText}</a>
+                `;
+            }
         }
     } catch (e) {
-        console.warn("[容錯機制] 廣告腳本或 DOM 被第三方套件攔截，已忽略該錯誤。", e);
+        console.warn("[容錯機制] 廣告腳本或 DOM 寫入失敗。", e);
     }
     
     const res = resultsData[finalType];
@@ -365,6 +510,16 @@ function showResult() {
 
     // 關鍵修復：必須先切換畫面解除 display:none，才能繪製 Chart.js
     switchScreen('result');
+
+    // 啟動蹦蹦跳跳倉鼠任務
+    setTimeout(() => {
+        moveJumper();
+        clearInterval(jumperInterval);
+        jumperInterval = setInterval(moveJumper, 3000);
+    }, 150);
+
+    // 檢查 Session 以決定是否觸發連續測驗擋板彩蛋
+    checkQuizSessionCount();
 
     if(res.stats) {
         // 延遲繪製圖表，確保 DOM 佈局已完成

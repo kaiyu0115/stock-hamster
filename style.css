@@ -8,13 +8,34 @@
 
 body {
     font-family: 'Noto Sans TC', sans-serif;
-    background-color: var(--bg-color);
+    background: linear-gradient(-45deg, #F7EBD3, #FFF6EC, #E6D0AC, #FAEDDB);
+    background-size: 400% 400%;
+    animation: gradientBG 12s ease infinite;
     color: var(--text);
     display: flex;
     justify-content: center;
     margin: 0;
     padding: 20px;
+    min-height: 100vh;
 }
+
+/* 新增：滑鼠/手指互動光暈追蹤特效 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    /* 使用 CSS 變數跟隨滑鼠，並產生輻射狀游移光暈 */
+    background: radial-gradient(circle 500px at var(--mouse-x, 50vw) var(--mouse-y, 50vh), rgba(255, 255, 255, 0.6), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
 
 /* 防禦性 CSS：防止擴充功能層級遮罩干擾點擊 */
 [class*="immersive-translate"],
@@ -35,7 +56,7 @@ body {
 }
 
 .screen { display: none; }
-.screen.active { display: block; animation: fadeIn 0.5s; }
+.screen.active { display: block; animation: slideUpFadeIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
 /* === 新增：共用圖片樣式 === */
 .screen-image {
@@ -54,25 +75,26 @@ button {
     background-color: var(--primary);
     color: white;
     border: none;
-    padding: 15px 30px;
-    border-radius: 25px;
+    padding: 15px 18px;
+    border-radius: 24px;
     font-size: 16px;
     cursor: pointer;
     width: 100%;
     margin-bottom: 10px;
-    transition: transform 0.2s, background-color 0.2s, opacity 0.2s;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative; /* 防禦性：避免按鈕被底層透明層遮擋 */
     z-index: 20;
+    box-shadow: 0 4px 6px rgba(209, 138, 80, 0.2);
 }
-button:hover { transform: scale(1.02); }
-button:active { transform: scale(0.95); opacity: 0.8; }
-button.selected { background-color: #A37A57; transform: scale(0.98); }
+button:hover { transform: translateY(-2px) scale(1.01); box-shadow: 0 6px 12px rgba(209, 138, 80, 0.3); }
+button:active { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 4px rgba(209, 138, 80, 0.2); opacity: 0.9; }
+button.selected { background-color: #A37A57; transform: scale(0.98); box-shadow: none; }
 
 #progress-bar {
     height: 8px; background: #EEE; border-radius: 4px; margin-bottom: 20px;
 }
 #progress-fill {
-    height: 100%; background: var(--primary); width: 0%; border-radius: 4px; transition: width 0.3s;
+    height: 100%; background: var(--primary); width: 0%; border-radius: 4px; transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* 原生廣告區塊 */
@@ -107,6 +129,22 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+@keyframes slideUpFadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#result-desc {
+    background-color: rgba(209, 138, 80, 0.08); /* 品牌色半透明底框 */
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #5C4D40;
+    margin: 15px 0 20px 0;
+    text-align: justify;
+}
+
 /* 標籤容器與徽章樣式 */
 .tags-container {
     display: flex;
@@ -127,11 +165,18 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
 }
 
 #radar-chart-container {
-    width: 100%;
-    max-width: 350px;
+    width: 90%;
+    max-width: 340px;
     height: 300px;
     margin: 20px auto;
     position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#radarChart {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 #capture-area {
@@ -139,6 +184,153 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
     padding: 20px 10px;
     border-radius: 12px;
     margin-bottom: 15px;
+    position: relative; /* 給 result-hamster 做絕對定位參考 */
+}
+
+/* === 動植物吉祥物裝飾 === */
+.floating-hamster-wrapper {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    z-index: 100;
+}
+.start-hamster {
+    top: -45px;
+    left: 50%;
+    margin-left: -30px; /* 向左偏移一半以完美置中 */
+    animation: panLeftRight 6s ease-in-out infinite;
+    pointer-events: auto; /* 允許 Hover 互動 */
+    cursor: pointer;
+}
+/* Hover互動：狂歡倉鼠 */
+.start-hamster:hover {
+    animation-play-state: paused;
+}
+.start-hamster:hover .floating-hamster {
+    animation: spinCrazy 0.4s linear infinite;
+}
+
+.result-hamster {
+    top: 20px;
+    left: 15px;
+    /* CSS 控制的物理引擎跳躍效果 */
+    transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: auto;
+    cursor: pointer;
+}
+.floating-hamster {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    animation: floatUpDown 3s ease-in-out infinite;
+}
+.swinging-hamster {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transform-origin: top center;
+    animation: swingAngle 4s ease-in-out infinite;
+}
+
+@keyframes panLeftRight {
+    0% { transform: translateX(-120px) scaleX(-1); }
+    49.9% { transform: translateX(120px) scaleX(-1); }
+    50% { transform: translateX(120px) scaleX(1); }
+    99.9% { transform: translateX(-120px) scaleX(1); }
+    100% { transform: translateX(-120px) scaleX(-1); }
+}
+@keyframes spinCrazy {
+    0% { transform: scale(1.4) rotate(0deg); }
+    100% { transform: scale(1.4) rotate(360deg); }
+}
+@keyframes floatUpDown {
+    0%, 100% { transform: translateY(0) rotate(5deg); }
+    50% { transform: translateY(-15px) rotate(-10deg); }
+}
+@keyframes swingAngle {
+    0%, 100% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+}
+
+/* === 工具提示框 === */
+.hamster-tooltip {
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    background: #FF6B6B;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 101;
+}
+.hamster-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 4px 4px 0;
+    border-style: solid;
+    border-color: #FF6B6B transparent transparent transparent;
+}
+.result-hamster:hover .hamster-tooltip,
+.result-hamster:active .hamster-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+/* === 彩蛋彈出視窗 === */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.modal-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: #FFF;
+    border-radius: 16px;
+    padding: 25px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+.modal-content h3 {
+    margin-top: 0;
+    color: #D18A50;
+}
+.modal-content p {
+    color: #6E5C4F;
+    font-size: 14px;
+    line-height: 1.6;
+}
+#close-modal-btn {
+    background: #A39180;
+    margin-top: 15px;
+}
+#modal-ad-container {
+    margin: 15px 0;
 }
 
 #watermark {
@@ -175,3 +367,30 @@ button.selected { background-color: #A37A57; transform: scale(0.98); }
 .line-btn { background-color: #06C755; }
 .fb-btn { background-color: #1877F2; }
 .copy-btn { background-color: #6E5C4F; }
+
+/* === 響應式優化 (Mobile) === */
+@media (max-width: 480px) {
+    body { padding: 10px; }
+    #app {
+        padding: 20px 15px;
+        border-radius: 16px;
+    }
+    h1 { font-size: 1.4em; }
+    h2 { font-size: 1.2em; }
+    button {
+        padding: 12px 15px;
+        font-size: 15px;
+    }
+    #result-desc {
+        padding: 12px 15px;
+        font-size: 13.5px;
+    }
+    .social-btn {
+        font-size: 13px;
+        padding: 10px 0;
+    }
+    #radar-chart-container {
+        height: 250px;
+        margin: 10px auto;
+    }
+}
