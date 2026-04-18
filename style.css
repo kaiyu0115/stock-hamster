@@ -14,9 +14,36 @@ body {
     color: var(--text);
     display: flex;
     justify-content: center;
+    align-items: center; /* 讓卡片在長螢幕手機中垂直置中，解決下方過多空洞的問題 */
     margin: 0;
     padding: 20px;
     min-height: 100vh;
+    box-sizing: border-box;
+}
+
+#ad-content-wrapper {
+    width: 100%;
+    height: auto;
+}
+
+#ad-content-wrapper p {
+    margin: 5px 0 0 0 !important;
+}
+
+#ad-content-wrapper a {
+    margin: 5px 0 0 0 !important;
+}
+
+#ad-content-wrapper img {
+    max-height: 400px;
+}
+
+/* 防禦性設計：如果螢幕高度過低，取消置中改靠上對齊，避免頂部標題被切掉無法滾動 */
+@media (max-height: 700px) {
+    body {
+        align-items: flex-start;
+        padding-top: 5vh;
+    }
 }
 
 /* 新增：滑鼠/手指互動光暈追蹤特效 */
@@ -53,6 +80,7 @@ body::before {
     text-align: center;
     position: relative; /* 防禦性：確立疊加基準 */
     z-index: 10;
+    box-sizing: border-box;
 }
 
 .screen { display: none; }
@@ -307,7 +335,9 @@ button.selected { background-color: #A37A57; transform: scale(0.98); box-shadow:
     border-radius: 16px;
     padding: 25px;
     width: 90%;
-    max-width: 320px;
+    max-width: 640px;
+    height: auto;
+    max-height: 90%;
     text-align: center;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     transform: translateY(20px);
@@ -327,10 +357,10 @@ button.selected { background-color: #A37A57; transform: scale(0.98); box-shadow:
 }
 #close-modal-btn {
     background: #A39180;
-    margin-top: 15px;
+    margin-top: 2px;
 }
 #modal-ad-container {
-    margin: 15px 0;
+    margin: 4px 0;
 }
 
 #watermark {
@@ -368,22 +398,51 @@ button.selected { background-color: #A37A57; transform: scale(0.98); box-shadow:
 .fb-btn { background-color: #1877F2; }
 .copy-btn { background-color: #6E5C4F; }
 
+/* 版權聲明區塊樣式 */
+.site-footer {
+    text-align: center;
+    padding: 20px 15px;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #8C7A6B; /* 配合你原本的倉鼠咖啡色系 */
+    line-height: 1.6;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.site-footer p {
+    margin: 0; /* 清除預設段落邊距 */
+}
+
+.site-footer .disclaimer {
+    font-size: 11px;
+    color: #A99A8F; /* 免責聲明顏色再淡一點，降低視覺干擾 */
+    margin-top: 6px;
+}
+
 /* === 響應式優化 (Mobile) === */
 @media (max-width: 480px) {
-    body { padding: 10px; }
+    body { 
+        padding: 15px; 
+    }
     #app {
         padding: 20px 15px;
         border-radius: 16px;
+        margin-top: 10px;
     }
-    h1 { font-size: 1.4em; }
-    h2 { font-size: 1.2em; }
+    h1 { font-size: 1.4em; margin-top: 25px; }
+    h2 { font-size: 1.2em; margin-top: 10px; }
+    p { font-size: 14px; margin-bottom: 12px; }
+    .screen-image { margin-bottom: 15px; max-height: 200px; }
     button {
         padding: 12px 15px;
         font-size: 15px;
+        margin-bottom: 8px;
     }
     #result-desc {
         padding: 12px 15px;
         font-size: 13.5px;
+        margin: 10px 0 15px 0;
     }
     .social-btn {
         font-size: 13px;
@@ -392,5 +451,13 @@ button.selected { background-color: #A37A57; transform: scale(0.98); box-shadow:
     #radar-chart-container {
         height: 250px;
         margin: 10px auto;
+    }
+    .native-ad-card {
+        margin: 15px 0;
+        padding: 15px;
+    }
+    .site-footer {
+        padding: 15px 10px;
+        margin-top: 15px;
     }
 }
