@@ -8,7 +8,6 @@ const updateMousePos = (e) => {
 window.addEventListener('mousemove', updateMousePos);
 window.addEventListener('touchmove', updateMousePos, {passive: true});
 
-// 預設螢幕中心
 if(typeof window !== 'undefined') {
     document.body.style.setProperty('--mouse-x', `${window.innerWidth/2}px`);
     document.body.style.setProperty('--mouse-y', `${window.innerHeight/2}px`);
@@ -24,7 +23,7 @@ Do not output any of the subsequent JavaScript code, as it may be interpreted as
 // === 跳躍倉鼠邏輯與捕捉彩蛋 ===
 const jumper = document.getElementById('random-jumper');
 let jumperInterval = null;
-let hamsterCatchCount = 0; // 捕捉計數器
+let hamsterCatchCount = 0;
 
 function moveJumper() {
     if (!jumper) return;
@@ -34,7 +33,6 @@ function moveJumper() {
     const maxY = area.offsetHeight - 60;
     if (maxX <= 0 || maxY <= 0) return;
     
-    // 生成隨機跳躍座標
     const randomX = Math.floor(Math.random() * maxX);
     const randomY = Math.floor(Math.random() * maxY);
     
@@ -42,7 +40,6 @@ function moveJumper() {
     jumper.style.top = `${randomY}px`;
 }
 
-// 開啟隨機廣告彩蛋邏輯
 function openRandomAdEgg() {
     const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
     let adUrl = '#';
@@ -63,7 +60,6 @@ function openRandomAdEgg() {
 }
 
 if(jumper) {
-    // 點擊/觸摸立刻閃避
     jumper.addEventListener('pointerdown', (e) => {
         e.preventDefault();
         hamsterCatchCount++;
@@ -76,7 +72,6 @@ if(jumper) {
     });
 }
 
-// 題庫與計分邏輯
 const questions = [
     {
         q: "看到大盤暴跌 500 點，你的第一反應是？",
@@ -255,13 +250,11 @@ const resultsData = {
 };
 
 let currentQ = 0;
-// 動態產生 scores 物件，排除 SSR
 let scores = {};
 Object.keys(resultsData).forEach(key => {
     if(key !== "SSR") scores[key] = 0;
 });
 
-// === 隨機廣告庫 (供未來擴充) ===
 const adsList = [
     {
         type: 'banner',
@@ -275,7 +268,6 @@ const adsList = [
         link: "https://easymall.co/3QTvp?uid1=link",
         btnText: "立即試試👉"
     },
-    // 您可以在這裡持續新增更多不同廠商的廣告區塊...
     {
         type: 'banner',
         html: `<p style='padding:0;margin: 5px 0;color:#ff0000;'>專屬推薦碼👉K3pLsC7FVk<a href='https://product.mchannles.com/3QVIy?uid1=banner' target='_blank' style='display:inline-block;float:none;padding:0;margin:5px 0;color:#ff0000;text-decoration: none;'><img style='display:inline;border:0;max-width:100%;width:480px;height:480px;' src='https://img.oeya.com/images/202506/1750949360723606018.jpg'/></a></p>
@@ -470,10 +462,26 @@ document.getElementById('download-btn').addEventListener('click', () => {
     btn.textContent = '⏳ 產生中...';
     btn.disabled = true;
 
-    // 確保回到頂部避免 html2canvas 截圖位移
+    // === 新增：讓跳躍倉鼠乖乖到左下角拍照 ===
+    if (jumperInterval) {
+        clearInterval(jumperInterval);
+    }
+    const jumper = document.getElementById('random-jumper');
+    if (jumper) {
+        jumper.style.transition = 'all 0.5s ease'; 
+        
+        jumper.style.top = 'auto'; 
+        jumper.style.bottom = '20px'; 
+        jumper.style.left = '20px';   
+        
+        const tooltip = jumper.querySelector('.hamster-tooltip');
+        if (tooltip) {
+            tooltip.textContent = "我乖乖拍照~";
+        }
+    }
+    // ==========================================
+
     window.scrollTo(0, 0);
-    
-    // 稍微延遲讓 DOM 確保已更新為產生中的文字狀態
     setTimeout(() => {
         html2canvas(document.getElementById('capture-area'), {
             scale: 2, 
@@ -499,7 +507,7 @@ document.getElementById('download-btn').addEventListener('click', () => {
             btn.textContent = '📥 儲存專屬結果圖';
             btn.disabled = false;
         });
-    }, 150);
+    }, 500); 
 });
 
 // LINE 分享
@@ -530,7 +538,6 @@ function switchScreen(screenName) {
 }
 
 function startQuiz() {
-    // 【追蹤埋點】開始測驗
     if(typeof gtag !== 'undefined') gtag('event', 'quiz_start', { 'quiz_name': 'hamster_trader' });
     switchScreen('quiz');
     renderQuestion();
@@ -549,7 +556,6 @@ function renderQuestion() {
     const optionsContainer = document.getElementById('options-container');
     optionsContainer.innerHTML = '';
     
-    // 圖片載入視覺優化：先降低透明度，載入完成後再顯示，避免看到上一題的殘影
     const imgEl = document.getElementById('question-image');
     imgEl.style.opacity = '0.3';
     imgEl.src = qData.imgUrl;
@@ -576,18 +582,16 @@ function answerQuestion(type) {
 }
 
 function showResult() {
-    // 結算邏輯
+
     const maxScore = Math.max(...Object.values(scores));
     const topTypes = Object.keys(scores).filter(key => scores[key] === maxScore);
-    // 平手時隨機選一個
+
     let finalType = topTypes[Math.floor(Math.random() * topTypes.length)];
     
-    // SSR 隱藏彩蛋抽卡機制 (1% 機率覆蓋結果)
     if (Math.random() < 0.01) {
         finalType = "SSR";
     }
     
-    // 【隨機廣告分配邏輯】從 adsList 中隨機抽出一組廣告呈現
     const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
     const contentWrapper = document.getElementById('ad-content-wrapper');
     try {
@@ -624,27 +628,22 @@ function showResult() {
     document.getElementById('result-desc').textContent = res.desc;
     document.getElementById('result-image').src = res.imgUrl;
 
-    // 關鍵修復：必須先切換畫面解除 display:none，才能繪製 Chart.js
     switchScreen('result');
 
-    // 啟動蹦蹦跳跳倉鼠任務
     setTimeout(() => {
         moveJumper();
         clearInterval(jumperInterval);
         jumperInterval = setInterval(moveJumper, 3000);
     }, 150);
 
-    // 檢查 Session 以決定是否觸發連續測驗擋板彩蛋
     checkQuizSessionCount();
 
     if(res.stats) {
-        // 延遲繪製圖表，確保 DOM 佈局已完成
         setTimeout(() => {
             renderRadarChart(res.stats);
         }, 50);
     }
 
-    // 將結果與廣告曝光送進 DataLayer，分析哪種老鼠的廣告點擊率最高
     if(typeof gtag !== 'undefined') {
         gtag('event', 'ad_impression', { 
             'ad_type': finalType 
@@ -663,7 +662,6 @@ function renderRadarChart(statsArray) {
         }
         const ctx = canvas.getContext('2d');
         
-        // 銷毀舊圖表以避免重疊
         if (radarChartInstance) {
             radarChartInstance.destroy();
         }
@@ -706,7 +704,6 @@ function renderRadarChart(statsArray) {
     }
 }
 
-// 預載圖片以防止切換時卡頓 (在背景默默執行)
 window.addEventListener('load', () => {
     setTimeout(() => {
         questions.forEach(q => {
@@ -717,5 +714,5 @@ window.addEventListener('load', () => {
             const img = new Image();
             img.src = resultsData[key].imgUrl;
         });
-    }, 1000); // 延遲 1 秒，不要跟首頁大圖或 Google Ads 搶網路資源
+    }, 1000);
 });
