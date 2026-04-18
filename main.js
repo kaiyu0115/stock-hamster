@@ -716,3 +716,22 @@ window.addEventListener('load', () => {
         });
     }, 1000);
 });
+
+document.addEventListener('contextmenu', event => {
+    event.preventDefault();
+});
+
+document.addEventListener('keydown', event => {
+    // 阻擋 F12
+    if (event.key === 'F12') {
+        event.preventDefault();
+    }
+    // 阻擋 Ctrl+Shift+I (Windows) 或 Cmd+Option+I (Mac)
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'i') {
+        event.preventDefault();
+    }
+    // 阻擋 Ctrl+U (Windows) 或 Cmd+Option+U (Mac) - 檢視原始碼
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
+        event.preventDefault();
+    }
+});
