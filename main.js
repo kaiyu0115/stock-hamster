@@ -1,3 +1,11 @@
+function isInAppBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return (ua.indexOf("FBAN") > -1) || 
+           (ua.indexOf("FBAV") > -1) || 
+           (ua.indexOf("Instagram") > -1) || 
+           (ua.indexOf("Line") > -1);
+}
+
 // === 背景滑鼠/手指互動光斑 ===
 const updateMousePos = (e) => {
     const x = e.touches ? e.touches[0].clientX : e.clientX;
@@ -454,26 +462,67 @@ document.getElementById('close-modal-btn')?.addEventListener('click', () => {
 function getShareText() {
     return `我測出來是「${document.getElementById('result-title').textContent}」！來測看看你的韭菜基因準不準！ 👉 `;
 }
-const shareUrl = window.location.href;
+const baseUrl = window.location.href.split('?')[0]; 
+const shareUrl = `${baseUrl}?openExternalBrowser=1`;
 
 // 圖片下載
+// === 1. 輔助函式：判斷是否在 In-App 瀏覽器 (FB, IG, LINE 等) ===
+function isInAppBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return (ua.indexOf("FBAN") > -1) || 
+           (ua.indexOf("FBAV") > -1) || 
+           (ua.indexOf("Instagram") > -1) || 
+           (ua.indexOf("Line") > -1);
+}
+
+// === 2. 輔助函式：顯示滿版遮罩讓使用者長按存圖 ===
+function showImageModal(imgDataUrl) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.85); z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 20px; box-sizing: border-box;
+    `;
+
+    const hint = document.createElement('div');
+    hint.textContent = "💡 請「長按圖片」即可儲存至手機相簿";
+    hint.style.cssText = "color: white; font-weight: bold; margin-bottom: 15px; font-size: 18px; text-align: center;";
+
+    const img = document.createElement('img');
+    img.src = imgDataUrl;
+    img.style.cssText = "max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);";
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = "✖ 關閉預覽";
+    closeBtn.style.cssText = "margin-top: 20px; padding: 10px 20px; background: #D18A50; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 16px;";
+    closeBtn.onclick = () => document.body.removeChild(overlay);
+
+    overlay.appendChild(hint);
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+    
+    // (可選) 追蹤有多少人成功開啟預覽模式
+    if(typeof gtag !== 'undefined') gtag('event', 'show_image_preview', { 'event_category': 'Engagement' });
+}
+
+// === 3. 圖片下載主要邏輯 (替換原有的 download-btn 事件) ===
 document.getElementById('download-btn').addEventListener('click', () => {
     const btn = document.getElementById('download-btn');
     btn.textContent = '⏳ 產生中...';
     btn.disabled = true;
 
-    // === 新增：讓跳躍倉鼠乖乖到左下角拍照 ===
+    // === 保持原有的跳躍倉鼠拍照邏輯 ===
     if (jumperInterval) {
         clearInterval(jumperInterval);
     }
     const jumper = document.getElementById('random-jumper');
     if (jumper) {
         jumper.style.transition = 'all 0.5s ease'; 
-        
         jumper.style.top = 'auto'; 
         jumper.style.bottom = '20px'; 
         jumper.style.left = '20px';   
-        
         const tooltip = jumper.querySelector('.hamster-tooltip');
         if (tooltip) {
             tooltip.textContent = "我乖乖拍照~";
@@ -488,19 +537,28 @@ document.getElementById('download-btn').addEventListener('click', () => {
             useCORS: true, 
             backgroundColor: '#FFF6EC'
         }).then(canvas => {
-            try {
-                const link = document.createElement('a');
-                link.download = 'hamster_result.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-            } catch (e) {
-                console.error("toDataURL failed", e);
-                alert("瀏覽器安全限制阻止了直接下載，請您直接對畫面截圖分享！");
+            const imgDataUrl = canvas.toDataURL('image/png');
+
+            if (isInAppBrowser()) {
+                // 若在 FB/IG/LINE 內，顯示結果圖片讓使用者長按
+                showImageModal(imgDataUrl);
+            } else {
+                // 正常瀏覽器，執行直接下載
+                try {
+                    const link = document.createElement('a');
+                    link.download = 'hamster_result.png';
+                    link.href = imgDataUrl;
+                    link.click();
+                } catch (e) {
+                    console.error("下載失敗，降級為長按模式", e);
+                    showImageModal(imgDataUrl); // 容錯機制：如果直接下載還是失敗，立刻彈出預覽畫面補救
+                }
             }
 
             btn.textContent = '📥 儲存專屬結果圖';
             btn.disabled = false;
             if(typeof gtag !== 'undefined') gtag('event', 'download_result');
+            
         }).catch(err => {
             console.error('截圖失敗', err);
             alert('截圖失敗，這可能是您的設備暫時不支援，請使用內建截圖功能！');
@@ -509,6 +567,38 @@ document.getElementById('download-btn').addEventListener('click', () => {
         });
     }, 500); 
 });
+
+function showImageModal(imgDataUrl) {
+    // 建立背景遮罩
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.85); z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 20px; box-sizing: border-box;
+    `;
+
+    // 建立提示文字
+    const hint = document.createElement('div');
+    hint.textContent = "💡 請「長按圖片」即可儲存至手機相簿";
+    hint.style.cssText = "color: white; font-weight: bold; margin-bottom: 15px; font-size: 18px; text-align: center;";
+
+    // 建立生成的圖片
+    const img = document.createElement('img');
+    img.src = imgDataUrl;
+    img.style.cssText = "max-width: 100%; max-height: 70vh; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);";
+
+    // 建立關閉按鈕
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = "✖ 關閉預覽";
+    closeBtn.style.cssText = "margin-top: 20px; padding: 10px 20px; background: #D18A50; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: 16px;";
+    closeBtn.onclick = () => document.body.removeChild(overlay);
+
+    overlay.appendChild(hint);
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+    document.body.appendChild(overlay);
+}
 
 // LINE 分享
 document.getElementById('share-line-btn').addEventListener('click', () => {
