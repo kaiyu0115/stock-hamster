@@ -678,14 +678,7 @@ window.addEventListener('load', () => {
     }, 1000);
 });
 
-// === 防拷貝與檢視原始碼邏輯 (放行圖片長按) ===
-document.addEventListener('contextmenu', event => {
-    // 判斷如果點擊的目標是圖片 (IMG)，則放行讓系統原生選單跳出
-    if (event.target && event.target.tagName.toLowerCase() === 'img') {
-        return; 
-    }
-    event.preventDefault();
-});
+// === 防拷貝與檢視原始碼邏輯 ===
 
 document.addEventListener('keydown', event => {
     if (event.key === 'F12') {
