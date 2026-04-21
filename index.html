@@ -46,6 +46,19 @@
      crossorigin="anonymous"></script>
 </head>
 <body>
+    <div id="loading-screen" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-hamster-wrapper">
+                <img src="images/hamster.png" class="loading-hamster" alt="Loading">
+                <div class="loading-wheel"></div>
+            </div>
+            <h2 class="loading-text">正在為您準備滾輪...</h2>
+            <div class="loading-bar-container">
+                <div id="loading-progress" class="loading-progress-bar"></div>
+            </div>
+            <p id="loading-percentage" class="loading-percentage">0%</p>
+        </div>
+    </div>
     <div id="app">
         <div id="start-screen" class="screen active">
             <h1 style="position:relative; margin-top:35px;">

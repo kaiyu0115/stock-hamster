@@ -670,20 +670,100 @@ function renderRadarChart(statsArray) {
     }
 }
 
-// === 圖片預載入 ===
+// === 圖片預載入與 Loading 畫面邏輯 ===
 window.addEventListener('load', () => {
-    setTimeout(() => {
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingProgress = document.getElementById('loading-progress');
+    const loadingPercentage = document.getElementById('loading-percentage');
+    
+    // 1. 收集所有需要預載的圖片網址
+    let imagesToPreload = [
+        "images/home-cover.png",
+        "images/hamster.png"
+    ];
+    
+    // 加入題庫圖片
+    if (typeof questions !== 'undefined') {
         questions.forEach(q => {
-            const img = new Image();
-            img.src = q.imgUrl;
+            if (q.imgUrl) imagesToPreload.push(q.imgUrl);
         });
+    }
+    
+    // 加入結果圖片
+    if (typeof resultsData !== 'undefined') {
         Object.keys(resultsData).forEach(key => {
-            const img = new Image();
-            img.src = resultsData[key].imgUrl;
+            if (resultsData[key].imgUrl) imagesToPreload.push(resultsData[key].imgUrl);
         });
-    }, 1000);
+    }
 
-    setTimeout(checkAndShowInAppWarning, 500); // 稍微延遲 0.5 秒，讓進場動畫跑完再跳出，視覺更滑順
+    let loadedCount = 0;
+    const totalImages = imagesToPreload.length;
+
+    // 2. 結束 Loading 的處理函式
+    function finishLoading() {
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden'); // 觸發 CSS 淡出動畫
+            
+            // 等待淡出動畫(0.6秒)結束後，完全隱藏元素，並執行 In-App 警告檢查
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                
+                // 確保 Loading 畫面完全消失後，才跳出警告，視覺最滑順
+                if (typeof checkAndShowInAppWarning === 'function') {
+                    checkAndShowInAppWarning(); 
+                }
+            }, 600); 
+        } else {
+            // 如果找不到 loading 元素，直接執行警告檢查
+            if (typeof checkAndShowInAppWarning === 'function') {
+                checkAndShowInAppWarning(); 
+            }
+        }
+    }
+
+    // 如果沒有圖片需要載入，直接結束 Loading
+    if (totalImages === 0) {
+        finishLoading();
+        return;
+    }
+
+    // 3. 處理圖片載入進度的函式
+    function imageLoaded() {
+        loadedCount++;
+        const percent = Math.floor((loadedCount / totalImages) * 100);
+        
+        // 更新進度條 UI
+        if (loadingProgress) loadingProgress.style.width = `${percent}%`;
+        if (loadingPercentage) loadingPercentage.textContent = `${percent}%`;
+
+        // 所有圖片載入完成
+        if (loadedCount === totalImages) {
+            // 刻意稍微延遲一下 (0.6秒)，讓使用者看清楚 100% 的狀態，體驗更好
+            setTimeout(finishLoading, 600);
+        }
+    }
+
+    // 4. 遍歷陣列並實際執行圖片載入
+    imagesToPreload.forEach(src => {
+        const img = new Image();
+        img.onload = imageLoaded;
+        img.onerror = () => {
+            console.warn(`[預載入] 圖片載入失敗，略過此圖: ${src}`);
+            imageLoaded(); // 即使失敗也算進度，避免卡死在 Loading 畫面
+        };
+        img.src = src;
+    });
+
+    // 5. 安全機制：設定最大等待時間 (8 秒)，時間到強制結束 Loading
+    // 避免某些網路環境極差的使用者卡在 Loading 畫面無法測驗
+    setTimeout(() => {
+        if (loadingScreen && loadingScreen.style.display !== 'none') {
+            console.warn("Loading timeout, forcing completion.");
+            if (loadingProgress) loadingProgress.style.width = `100%`;
+            if (loadingPercentage) loadingPercentage.textContent = `100%`;
+            finishLoading();
+        }
+    }, 5000); 
 });
 
 // === 防拷貝與檢視原始碼邏輯 ===
