@@ -682,6 +682,8 @@ window.addEventListener('load', () => {
             img.src = resultsData[key].imgUrl;
         });
     }, 1000);
+
+    setTimeout(checkAndShowInAppWarning, 500); // 稍微延遲 0.5 秒，讓進場動畫跑完再跳出，視覺更滑順
 });
 
 // === 防拷貝與檢視原始碼邏輯 ===
@@ -696,3 +698,55 @@ document.addEventListener('keydown', event => {
         event.preventDefault();
     }
 });
+
+// === 新增：首頁 In-App 瀏覽器警告 Modal ===
+function checkAndShowInAppWarning() {
+    // 檢查是否在 In-App 瀏覽器，且 SessionStorage 中沒有記錄已看過警告
+    if (isInAppBrowser() && !sessionStorage.getItem('hasSeenInAppWarning')) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px; box-sizing: border-box;
+        `;
+
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: #FFF; border-radius: 16px; padding: 30px 25px;
+            width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUpFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        `;
+
+        modalContent.innerHTML = `
+            <div style="font-size: 40px; margin-bottom: 15px;">⚠️</div>
+            <h3 style="color: #D18A50; margin: 0 0 15px 0; font-size: 20px;">強烈建議開啟外部瀏覽器</h3>
+            <p style="color: #6E5C4F; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+                您目前正使用社群軟體內建的瀏覽器。<br><br>
+                為了確保稍後能<b>順利下載測驗結果圖</b>，強烈建議您現在點擊右上角的「...」，選擇<b>「以預設瀏覽器開啟」</b>（Safari / Chrome）。
+            </p>
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = "我知道了，繼續測驗";
+        closeBtn.style.cssText = `
+            background: #D18A50; color: white; border: none; padding: 12px 25px;
+            border-radius: 24px; font-size: 16px; font-weight: bold; cursor: pointer;
+            width: 100%; transition: transform 0.2s;
+        `;
+        
+        closeBtn.onclick = () => {
+            // 記錄已看過，避免重新整理或重新測驗時一直跳出
+            sessionStorage.setItem('hasSeenInAppWarning', 'true');
+            document.body.removeChild(overlay);
+        };
+
+        modalContent.appendChild(closeBtn);
+        overlay.appendChild(modalContent);
+        document.body.appendChild(overlay);
+        
+        // 追蹤警告視窗的曝光
+        if(typeof gtag !== 'undefined') gtag('event', 'show_in_app_warning', { 'event_category': 'UX' });
+    }
+}
