@@ -362,24 +362,30 @@ function getShareText() {
 const baseUrl = window.location.href.split('?')[0]; 
 const shareUrl = `${baseUrl}?openExternalBrowser=1`;
 
-// === 優化版：顯示滿版遮罩讓使用者長按存圖 ===
+// === 優化版：顯示滿版遮罩讓使用者長按存圖 (包含開啟外部瀏覽器提示) ===
 function showImageModal(imgDataUrl) {
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.85); z-index: 99999;
+        background: rgba(0,0,0,0.9); z-index: 99999;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         padding: 20px; box-sizing: border-box;
     `;
 
+    // ★ 重點更新：加入右上角以預設瀏覽器開啟的顯眼提示 ★
     const hint = document.createElement('div');
-    hint.textContent = "💡 請「長按下方圖片」即可儲存至手機相簿";
-    hint.style.cssText = "color: white; font-weight: bold; margin-bottom: 15px; font-size: 18px; text-align: center; animation: pulse 1.5s infinite;";
+    hint.innerHTML = `
+        <div style="animation: pulse 1.5s infinite; margin-bottom: 8px;">💡 請「長按下方圖片」即可儲存至相簿</div>
+        <div style="font-size: 14px; color: #FFD700; margin-bottom: 15px; border: 1px dashed #FFD700; padding: 10px; border-radius: 8px; background: rgba(255,215,0,0.15);">
+            ⚠️ 由於社群軟體限制，<br>建議點擊右上角「...」選擇<br><strong>「以預設瀏覽器開啟」</strong>體驗更佳！
+        </div>
+    `;
+    hint.style.cssText = "color: white; font-weight: bold; font-size: 18px; text-align: center; line-height: 1.4;";
 
     const img = document.createElement('img');
     img.src = imgDataUrl;
     img.style.cssText = `
-        max-width: 100%; max-height: 70vh; border-radius: 12px; 
+        max-width: 100%; max-height: 60vh; border-radius: 12px; 
         box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         -webkit-touch-callout: default; 
         user-select: none;
@@ -679,7 +685,6 @@ window.addEventListener('load', () => {
 });
 
 // === 防拷貝與檢視原始碼邏輯 ===
-
 document.addEventListener('keydown', event => {
     if (event.key === 'F12') {
         event.preventDefault();
