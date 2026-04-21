@@ -762,7 +762,7 @@ window.addEventListener('load', () => {
         img.src = src;
     });
 
-    // Timeout 防卡死保護 (8秒)
+    // Timeout 防卡死保護 (3秒)
     setTimeout(() => {
         if (loadingScreen && loadingScreen.style.display !== 'none') {
             console.warn("Loading timeout, forcing completion.");
@@ -770,7 +770,7 @@ window.addEventListener('load', () => {
             if (loadingPercentage) loadingPercentage.textContent = `100%`;
             finishLoading();
         }
-    }, 8000); 
+    }, 3000); 
 });
 
 // ==========================================
