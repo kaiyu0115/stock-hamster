@@ -1,4 +1,6 @@
-// === 判斷是否在 In-App 瀏覽器 (FB, IG, LINE 等) ===
+// ==========================================
+// 1. 全域與環境判定函式
+// ==========================================
 function isInAppBrowser() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     return (ua.indexOf("FBAN") > -1) || 
@@ -22,59 +24,60 @@ if(typeof window !== 'undefined') {
     document.body.style.setProperty('--mouse-y', `${window.innerHeight/2}px`);
 }
 
-// === 跳躍倉鼠邏輯與捕捉彩蛋 ===
-const jumper = document.getElementById('random-jumper');
-let jumperInterval = null;
-let hamsterCatchCount = 0;
+// ==========================================
+// 2. 首頁 In-App 瀏覽器警告 Modal
+// ==========================================
+function checkAndShowInAppWarning() {
+    if (isInAppBrowser() && !sessionStorage.getItem('hasSeenInAppWarning')) {
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 25px; box-sizing: border-box;
+        `;
 
-function moveJumper() {
-    if (!jumper) return;
-    const area = document.getElementById('capture-area');
-    if (!area) return;
-    const maxX = area.offsetWidth - 60;
-    const maxY = area.offsetHeight - 60;
-    if (maxX <= 0 || maxY <= 0) return;
-    
-    const randomX = Math.floor(Math.random() * maxX);
-    const randomY = Math.floor(Math.random() * maxY);
-    
-    jumper.style.left = `${randomX}px`;
-    jumper.style.top = `${randomY}px`;
-}
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background: #FFF; border-radius: 16px; padding: 30px 25px;
+            width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            animation: slideUpFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        `;
 
-function openRandomAdEgg() {
-    const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
-    let adUrl = '#';
-    if(randomAd.type === 'text' && randomAd.link) {
-        adUrl = randomAd.link;
-    } else if(randomAd.type === 'banner' && randomAd.html) {
-        const match = randomAd.html.match(/href=['"](.*?)['"]/);
-        if(match && match[1]) adUrl = match[1];
+        modalContent.innerHTML = `
+            <div style="font-size: 40px; margin-bottom: 15px;">⚠️</div>
+            <h3 style="color: #D18A50; margin: 0 0 15px 0; font-size: 20px;">強烈建議開啟外部瀏覽器</h3>
+            <p style="color: #6E5C4F; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
+                您目前正使用社群軟體內建的瀏覽器。<br><br>
+                為了確保稍後能<b>順利下載測驗結果圖</b>，強烈建議您現在點擊右上角的「...」，選擇<b>「以預設瀏覽器開啟」</b>（Safari / Chrome）。
+            </p>
+        `;
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = "我知道了，繼續測驗";
+        closeBtn.style.cssText = `
+            background: #D18A50; color: white; border: none; padding: 12px 25px;
+            border-radius: 24px; font-size: 16px; font-weight: bold; cursor: pointer;
+            width: 100%; transition: transform 0.2s;
+        `;
+        
+        closeBtn.onclick = () => {
+            sessionStorage.setItem('hasSeenInAppWarning', 'true');
+            document.body.removeChild(overlay);
+        };
+
+        modalContent.appendChild(closeBtn);
+        overlay.appendChild(modalContent);
+        document.body.appendChild(overlay);
+        
+        if(typeof gtag !== 'undefined') gtag('event', 'show_in_app_warning', { 'event_category': 'UX' });
     }
-    
-    if(typeof gtag !== 'undefined') {
-        gtag('event', 'catch_hamster_ad', {
-            'ad_url': adUrl,
-            'event_category': 'Easter_Egg'
-        });
-    }
-    window.open(adUrl, '_blank');
 }
 
-if(jumper) {
-    jumper.addEventListener('pointerdown', (e) => {
-        e.preventDefault();
-        hamsterCatchCount++;
-        if(hamsterCatchCount >= 3) {
-            hamsterCatchCount = 0;
-            openRandomAdEgg();
-        } else {
-            moveJumper();
-        }
-    });
-}
-
-// === 題庫資料 ===
+// ==========================================
+// 3. 題庫與結果資料
+// ==========================================
 const questions = [
     {
         q: "看到大盤暴跌 500 點，你的第一反應是？",
@@ -178,7 +181,6 @@ const questions = [
     }
 ];
 
-// === 結果資料庫 ===
 const resultsData = {
     "A": { 
         title: "當沖跑輪鼠", 
@@ -252,13 +254,7 @@ const resultsData = {
     }
 };
 
-let currentQ = 0;
-let scores = {};
-Object.keys(resultsData).forEach(key => {
-    if(key !== "SSR") scores[key] = 0;
-});
-
-// === 廣告清單 ===
+// 廣告清單
 const adsList = [
     { type: 'banner', html: `<p style='padding:0;margin: 5px 0;color:#ff0000;'><a href='https://adcenter.conn.tw/3QTuv?uid1=banner' target='_blank' style='display:inline-block;float:none;padding:0;margin:5px 0;color:#ff0000;text-decoration: none;'><img style='display:inline;border:0;max-width:100%;width:500px;height:500px;' src='https://img.oeya.com/images/202503/1741011389297161392.jpg'/></a></p><img src="https://adcenter.conn.tw/track/oeya_url_image.php?key=d27a3aba0ef9bebb509838160af0d156" style="height:1px;width:1px;border:0" /><p>想要在股市裡穩定獲利嗎？試試看這款專業的選股工具，幫你找到下一檔潛力股！</p>` },
     { type: 'text', title: "精選推薦智能選股工具", desc: "別人抱著概念股早就在杜拜看豪宅？立即查看這款推薦工具，開始改變！", link: "https://easymall.co/3QTvp?uid1=link", btnText: "立即試試👉" },
@@ -283,7 +279,12 @@ const adsList = [
     { type: 'banner', html: `<p style='padding:0;margin: 5px 0;color:#ff0000;'><a href='https://joymall.co/3QVKR?uid1=banner&uid2=03' target='_blank' style='display:inline-block;float:none;padding:0;margin:5px 0;color:#ff0000;text-decoration: none;'><img style='display:inline;border:0;max-width:100%;width:480px;height:480px;' src='https://img.oeya.com/images/202603/1773369798200233724.jpg'/></a></p><img src="https://adcenter.conn.tw/track/oeya_url_image.php?key=f8c573e978b0204f2e5b0ea6c9e5ff07" style="height:1px;width:1px;border:0" /><p>積少成多是投資美德，省小錢賺大錢!</p>` }
 ];
 
-// === DOM 元素 ===
+let currentQ = 0;
+let scores = {};
+Object.keys(resultsData).forEach(key => {
+    if(key !== "SSR") scores[key] = 0;
+});
+
 const screens = {
     start: document.getElementById('start-screen'),
     quiz: document.getElementById('quiz-screen'),
@@ -291,34 +292,55 @@ const screens = {
     ad: document.getElementById('ad-screen')
 };
 
-// === 綁定事件 ===
-document.getElementById('start-btn').addEventListener('click', startQuiz);
-document.getElementById('restart-btn').addEventListener('click', () => {
-    if(typeof gtag !== 'undefined') gtag('event', 'click_restart', { 'event_category': 'Engagement' });
-    location.reload();
-});
-document.getElementById('go-ad-btn').addEventListener('click', () => {
-    if(typeof gtag !== 'undefined') gtag('event', 'click_go_ad_page', { 'event_category': 'Engagement' });
-    switchScreen('ad');
-});
+// ==========================================
+// 4. 跳躍倉鼠彩蛋與 Session 追蹤
+// ==========================================
+const jumper = document.getElementById('random-jumper');
+let jumperInterval = null;
+let hamsterCatchCount = 0;
 
-// === GA4 廣告點擊追蹤 ===
-const adWrapper = document.getElementById('ad-content-wrapper');
-if (adWrapper) {
-    adWrapper.addEventListener('click', (e) => {
-        const linkEl = e.target.closest('a');
-        if (linkEl) {
-            if(typeof gtag !== 'undefined') {
-                gtag('event', 'click_ad_content', {
-                    'ad_url': linkEl.href,
-                    'event_category': 'Monetization'
-                });
-            }
+function moveJumper() {
+    if (!jumper) return;
+    const area = document.getElementById('capture-area');
+    if (!area) return;
+    const maxX = area.offsetWidth - 60;
+    const maxY = area.offsetHeight - 60;
+    if (maxX <= 0 || maxY <= 0) return;
+    
+    const randomX = Math.floor(Math.random() * maxX);
+    const randomY = Math.floor(Math.random() * maxY);
+    
+    jumper.style.left = `${randomX}px`;
+    jumper.style.top = `${randomY}px`;
+}
+
+function openRandomAdEgg() {
+    const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
+    let adUrl = '#';
+    if(randomAd.type === 'text' && randomAd.link) {
+        adUrl = randomAd.link;
+    } else if(randomAd.type === 'banner' && randomAd.html) {
+        const match = randomAd.html.match(/href=['"](.*?)['"]/);
+        if(match && match[1]) adUrl = match[1];
+    }
+    
+    if(typeof gtag !== 'undefined') gtag('event', 'catch_hamster_ad', { 'ad_url': adUrl, 'event_category': 'Easter_Egg' });
+    window.open(adUrl, '_blank');
+}
+
+if(jumper) {
+    jumper.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        hamsterCatchCount++;
+        if(hamsterCatchCount >= 3) {
+            hamsterCatchCount = 0;
+            openRandomAdEgg();
+        } else {
+            moveJumper();
         }
     });
 }
 
-// === Session 次數追蹤與彩蛋彈窗 ===
 function checkQuizSessionCount() {
     let quizCount = parseInt(sessionStorage.getItem('quizCompleteCount') || '0');
     quizCount++;
@@ -350,47 +372,90 @@ function showEasterEggModal() {
     modal.classList.add('show');
 }
 
-// 綁定關閉 Modal 按鈕
 document.getElementById('close-modal-btn')?.addEventListener('click', () => {
     document.getElementById('easter-egg-modal').classList.remove('show');
 });
 
-// === 分享與圖片下載相關功能 ===
+// ==========================================
+// 5. 事件綁定 (測驗、廣告、分享)
+// ==========================================
+document.getElementById('start-btn').addEventListener('click', startQuiz);
+document.getElementById('restart-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'click_restart', { 'event_category': 'Engagement' });
+    location.reload();
+});
+document.getElementById('go-ad-btn').addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'click_go_ad_page', { 'event_category': 'Engagement' });
+    switchScreen('ad');
+});
+
+const adWrapper = document.getElementById('ad-content-wrapper');
+if (adWrapper) {
+    adWrapper.addEventListener('click', (e) => {
+        const linkEl = e.target.closest('a');
+        if (linkEl && typeof gtag !== 'undefined') {
+            gtag('event', 'click_ad_content', { 'ad_url': linkEl.href, 'event_category': 'Monetization' });
+        }
+    });
+}
+
 function getShareText() {
     return `我測出來是「${document.getElementById('result-title').textContent}」！來測看看你的韭菜基因準不準！ 👉 `;
 }
 const baseUrl = window.location.href.split('?')[0]; 
 const shareUrl = `${baseUrl}?openExternalBrowser=1`;
 
-// === 優化版：顯示滿版遮罩讓使用者長按存圖 (包含開啟外部瀏覽器提示) ===
-function showImageModal(imgDataUrl) {
+// LINE 分享
+document.getElementById('share-line-btn')?.addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'LINE', content_type: 'quiz_result' });
+    const text = encodeURIComponent(getShareText() + '\n' + shareUrl);
+    window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
+});
+
+// FB 分享
+document.getElementById('share-fb-btn')?.addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Facebook', content_type: 'quiz_result' });
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+});
+
+// 複製連結
+document.getElementById('share-copy-btn')?.addEventListener('click', () => {
+    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Copy_Link', content_type: 'quiz_result' });
+    const fullText = getShareText() + shareUrl;
+    navigator.clipboard.writeText(fullText).then(() => {
+        alert('已複製結果與連結，快去貼給朋友吧！');
+    });
+});
+
+// ==========================================
+// 6. 下載圖片與長按預覽邏輯 (Blob + Touch Callout)
+// ==========================================
+function showImageModal(imgUrl) {
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.9); z-index: 99999;
+        background: rgba(0,0,0,0.95); z-index: 99999;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         padding: 20px; box-sizing: border-box;
     `;
 
-    // ★ 重點更新：加入右上角以預設瀏覽器開啟的顯眼提示 ★
     const hint = document.createElement('div');
     hint.innerHTML = `
-        <div style="animation: pulse 1.5s infinite; margin-bottom: 8px;">💡 請「長按下方圖片」即可儲存至相簿</div>
-        <div style="font-size: 14px; color: #FFD700; margin-bottom: 15px; border: 1px dashed #FFD700; padding: 10px; border-radius: 8px; background: rgba(255,215,0,0.15);">
-            ⚠️ 由於社群軟體限制，<br>建議點擊右上角「...」選擇<br><strong>「以預設瀏覽器開啟」</strong>體驗更佳！
+        <div style="animation: pulse 1.5s infinite; margin-bottom: 6px;">💡 請「長按下方圖片」儲存</div>
+        <div style="font-size: 14px; color: #AAA; margin-bottom: 12px;">( 若長按無跳出選單，請直接手機截圖 📸 )</div>
+        <div style="font-size: 13px; color: #FFD700; margin-bottom: 15px; border: 1px dashed #FFD700; padding: 8px; border-radius: 8px; background: rgba(255,215,0,0.15);">
+            ⚠️ 社群軟體限制多，強烈建議點右上角「...」<br>選擇<strong>「以預設瀏覽器開啟」</strong>
         </div>
     `;
     hint.style.cssText = "color: white; font-weight: bold; font-size: 18px; text-align: center; line-height: 1.4;";
 
     const img = document.createElement('img');
-    img.src = imgDataUrl;
+    img.src = imgUrl;
     img.style.cssText = `
         max-width: 100%; max-height: 60vh; border-radius: 12px; 
         box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        -webkit-touch-callout: default; 
-        user-select: none;
-        -webkit-user-select: none;
-        pointer-events: auto;
+        -webkit-touch-callout: default !important; 
+        pointer-events: auto !important;
     `;
 
     const closeBtn = document.createElement('button');
@@ -403,7 +468,6 @@ function showImageModal(imgDataUrl) {
     overlay.appendChild(closeBtn);
     document.body.appendChild(overlay);
     
-    // 動態加入閃爍提示動畫
     if (!document.getElementById('pulse-anim')) {
         const style = document.createElement('style');
         style.id = 'pulse-anim';
@@ -414,19 +478,14 @@ function showImageModal(imgDataUrl) {
     if(typeof gtag !== 'undefined') gtag('event', 'show_image_preview', { 'event_category': 'Engagement' });
 }
 
-// === 圖片下載主要邏輯 ===
-document.getElementById('download-btn').addEventListener('click', () => {
+document.getElementById('download-btn')?.addEventListener('click', () => {
     const btn = document.getElementById('download-btn');
     btn.textContent = '⏳ 產生中...';
     btn.disabled = true;
     
-    // 防滾動鎖定，避免產生截圖時排版跑位
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; 
 
-    // 保持原有的跳躍倉鼠拍照邏輯
-    if (jumperInterval) {
-        clearInterval(jumperInterval);
-    }
+    if (jumperInterval) clearInterval(jumperInterval);
     const jumper = document.getElementById('random-jumper');
     if (jumper) {
         jumper.style.transition = 'all 0.5s ease'; 
@@ -434,9 +493,7 @@ document.getElementById('download-btn').addEventListener('click', () => {
         jumper.style.bottom = '20px'; 
         jumper.style.left = '20px';   
         const tooltip = jumper.querySelector('.hamster-tooltip');
-        if (tooltip) {
-            tooltip.textContent = "我乖乖拍照~";
-        }
+        if (tooltip) tooltip.textContent = "我乖乖拍照~";
     }
 
     window.scrollTo(0, 0);
@@ -446,60 +503,50 @@ document.getElementById('download-btn').addEventListener('click', () => {
             useCORS: true, 
             backgroundColor: '#FFF6EC'
         }).then(canvas => {
-            document.body.style.overflow = ''; // 恢復滾動
-            const imgDataUrl = canvas.toDataURL('image/png');
-
-            if (isInAppBrowser()) {
-                showImageModal(imgDataUrl);
-            } else {
-                try {
-                    const link = document.createElement('a');
-                    link.download = 'hamster_result.png';
-                    link.href = imgDataUrl;
-                    link.click();
-                } catch (e) {
-                    console.error("下載失敗，降級為長按模式", e);
-                    showImageModal(imgDataUrl); 
+            document.body.style.overflow = ''; 
+            
+            canvas.toBlob((blob) => {
+                let imgUrl;
+                if (blob) {
+                    imgUrl = URL.createObjectURL(blob);
+                } else {
+                    imgUrl = canvas.toDataURL('image/png');
                 }
-            }
 
-            btn.textContent = '📥 儲存專屬結果圖';
-            btn.disabled = false;
-            if(typeof gtag !== 'undefined') gtag('event', 'download_result');
+                if (isInAppBrowser()) {
+                    showImageModal(imgUrl);
+                } else {
+                    try {
+                        const link = document.createElement('a');
+                        link.download = 'hamster_result.png';
+                        link.href = imgUrl;
+                        link.click();
+                        if (blob) setTimeout(() => URL.revokeObjectURL(imgUrl), 5000);
+                    } catch (e) {
+                        console.error("下載失敗，降級為長按模式", e);
+                        showImageModal(imgUrl); 
+                    }
+                }
+
+                btn.textContent = '📥 儲存專屬結果圖';
+                btn.disabled = false;
+                if(typeof gtag !== 'undefined') gtag('event', 'download_result');
+                
+            }, 'image/png');
             
         }).catch(err => {
-            document.body.style.overflow = ''; // 恢復滾動
+            document.body.style.overflow = '';
             console.error('截圖失敗', err);
-            alert('截圖失敗，這可能是您的設備暫時不支援，請使用內建截圖功能！');
+            alert('截圖失敗，請您直接對畫面截圖分享！');
             btn.textContent = '📥 儲存專屬結果圖';
             btn.disabled = false;
         });
     }, 500); 
 });
 
-// LINE 分享
-document.getElementById('share-line-btn').addEventListener('click', () => {
-    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'LINE', content_type: 'quiz_result' });
-    const text = encodeURIComponent(getShareText() + '\n' + shareUrl);
-    window.open(`https://line.me/R/msg/text/?${text}`, '_blank');
-});
-
-// FB 分享
-document.getElementById('share-fb-btn').addEventListener('click', () => {
-    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Facebook', content_type: 'quiz_result' });
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
-});
-
-// 複製連結
-document.getElementById('share-copy-btn').addEventListener('click', () => {
-    if(typeof gtag !== 'undefined') gtag('event', 'share', { method: 'Copy_Link', content_type: 'quiz_result' });
-    const fullText = getShareText() + shareUrl;
-    navigator.clipboard.writeText(fullText).then(() => {
-        alert('已複製結果與連結，快去貼給朋友吧！');
-    });
-});
-
-// === 測驗流程邏輯 ===
+// ==========================================
+// 7. 測驗核心流程
+// ==========================================
 function switchScreen(screenName) {
     Object.values(screens).forEach(s => s.classList.remove('active'));
     screens[screenName].classList.add('active');
@@ -527,9 +574,7 @@ function renderQuestion() {
     const imgEl = document.getElementById('question-image');
     imgEl.style.opacity = '0.3';
     imgEl.src = qData.imgUrl;
-    imgEl.onload = () => {
-        imgEl.style.opacity = '1';
-    };
+    imgEl.onload = () => { imgEl.style.opacity = '1'; };
 
     qData.options.forEach(opt => {
         const btn = document.createElement('button');
@@ -554,11 +599,9 @@ function showResult() {
     const topTypes = Object.keys(scores).filter(key => scores[key] === maxScore);
 
     let finalType = topTypes[Math.floor(Math.random() * topTypes.length)];
+    if (Math.random() < 0.01) finalType = "SSR";
     
-    if (Math.random() < 0.01) {
-        finalType = "SSR";
-    }
-    
+    // 動態派發廣告
     const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
     const contentWrapper = document.getElementById('ad-content-wrapper');
     try {
@@ -574,9 +617,10 @@ function showResult() {
             }
         }
     } catch (e) {
-        console.warn("[容錯機制] 廣告腳本或 DOM 寫入失敗。", e);
+        console.warn("[容錯機制] 廣告腳本寫入失敗。", e);
     }
     
+    // 渲染結果文字與圖片
     const res = resultsData[finalType];
     document.getElementById('result-title').textContent = res.title;
     
@@ -605,32 +649,24 @@ function showResult() {
     checkQuizSessionCount();
 
     if(res.stats) {
-        setTimeout(() => {
-            renderRadarChart(res.stats);
-        }, 50);
+        setTimeout(() => { renderRadarChart(res.stats); }, 50);
     }
 
-    if(typeof gtag !== 'undefined') {
-        gtag('event', 'ad_impression', { 
-            'ad_type': finalType 
-        });
-    }
+    if(typeof gtag !== 'undefined') gtag('event', 'ad_impression', { 'ad_type': finalType });
 }
 
+// ==========================================
+// 8. 雷達圖繪製
+// ==========================================
 let radarChartInstance = null;
 
 function renderRadarChart(statsArray) {
     try {
         const canvas = document.getElementById('radarChart');
-        if (!canvas) {
-            console.warn("[容錯機制] 找不到 Chart Canvas，可能已被第三方擴充功能阻擋。");
-            return;
-        }
+        if (!canvas) return;
         const ctx = canvas.getContext('2d');
         
-        if (radarChartInstance) {
-            radarChartInstance.destroy();
-        }
+        if (radarChartInstance) radarChartInstance.destroy();
         
         radarChartInstance = new Chart(ctx, {
             type: 'radar',
@@ -649,8 +685,7 @@ function renderRadarChart(statsArray) {
             options: {
                 scales: {
                     r: {
-                        min: 0,
-                        max: 5,
+                        min: 0, max: 5,
                         ticks: { display: false, stepSize: 1 },
                         grid: { color: 'rgba(0,0,0,0.05)' },
                         angleLines: { color: 'rgba(0,0,0,0.1)' },
@@ -660,36 +695,26 @@ function renderRadarChart(statsArray) {
                         }
                     }
                 },
-                plugins: {
-                    legend: { display: false }
-                }
+                plugins: { legend: { display: false } }
             }
         });
     } catch (error) {
-        console.error("[容錯機制] Chart.js 繪圖過程遭中斷，已優雅降級維持主要介面顯示。", error);
+        console.error("[容錯機制] Chart.js 繪圖遭中斷。", error);
     }
 }
 
-// === 圖片預載入與 Loading 畫面邏輯 ===
+// ==========================================
+// 9. 真實進度預載入 Loading (防卡死機制)
+// ==========================================
 window.addEventListener('load', () => {
     const loadingScreen = document.getElementById('loading-screen');
     const loadingProgress = document.getElementById('loading-progress');
     const loadingPercentage = document.getElementById('loading-percentage');
     
-    // 1. 收集所有需要預載的圖片網址
-    let imagesToPreload = [
-        "images/home-cover.png",
-        "images/hamster.png"
-    ];
-    
-    // 加入題庫圖片
+    let imagesToPreload = ["images/home-cover.png", "images/hamster.png"];
     if (typeof questions !== 'undefined') {
-        questions.forEach(q => {
-            if (q.imgUrl) imagesToPreload.push(q.imgUrl);
-        });
+        questions.forEach(q => { if (q.imgUrl) imagesToPreload.push(q.imgUrl); });
     }
-    
-    // 加入結果圖片
     if (typeof resultsData !== 'undefined') {
         Object.keys(resultsData).forEach(key => {
             if (resultsData[key].imgUrl) imagesToPreload.push(resultsData[key].imgUrl);
@@ -699,63 +724,45 @@ window.addEventListener('load', () => {
     let loadedCount = 0;
     const totalImages = imagesToPreload.length;
 
-    // 2. 結束 Loading 的處理函式
     function finishLoading() {
         if (loadingScreen) {
-            loadingScreen.classList.add('hidden'); // 觸發 CSS 淡出動畫
-            
-            // 等待淡出動畫(0.6秒)結束後，完全隱藏元素，並執行 In-App 警告檢查
+            loadingScreen.classList.add('hidden'); 
             setTimeout(() => {
                 loadingScreen.style.display = 'none';
-                
-                // 確保 Loading 畫面完全消失後，才跳出警告，視覺最滑順
-                if (typeof checkAndShowInAppWarning === 'function') {
-                    checkAndShowInAppWarning(); 
-                }
+                if (typeof checkAndShowInAppWarning === 'function') checkAndShowInAppWarning(); 
             }, 600); 
         } else {
-            // 如果找不到 loading 元素，直接執行警告檢查
-            if (typeof checkAndShowInAppWarning === 'function') {
-                checkAndShowInAppWarning(); 
-            }
+            if (typeof checkAndShowInAppWarning === 'function') checkAndShowInAppWarning(); 
         }
     }
 
-    // 如果沒有圖片需要載入，直接結束 Loading
     if (totalImages === 0) {
         finishLoading();
         return;
     }
 
-    // 3. 處理圖片載入進度的函式
     function imageLoaded() {
         loadedCount++;
         const percent = Math.floor((loadedCount / totalImages) * 100);
-        
-        // 更新進度條 UI
         if (loadingProgress) loadingProgress.style.width = `${percent}%`;
         if (loadingPercentage) loadingPercentage.textContent = `${percent}%`;
 
-        // 所有圖片載入完成
         if (loadedCount === totalImages) {
-            // 刻意稍微延遲一下 (0.6秒)，讓使用者看清楚 100% 的狀態，體驗更好
             setTimeout(finishLoading, 600);
         }
     }
 
-    // 4. 遍歷陣列並實際執行圖片載入
     imagesToPreload.forEach(src => {
         const img = new Image();
         img.onload = imageLoaded;
         img.onerror = () => {
-            console.warn(`[預載入] 圖片載入失敗，略過此圖: ${src}`);
-            imageLoaded(); // 即使失敗也算進度，避免卡死在 Loading 畫面
+            console.warn(`[預載入] 圖片載入失敗: ${src}`);
+            imageLoaded();
         };
         img.src = src;
     });
 
-    // 5. 安全機制：設定最大等待時間 (8 秒)，時間到強制結束 Loading
-    // 避免某些網路環境極差的使用者卡在 Loading 畫面無法測驗
+    // Timeout 防卡死保護 (8秒)
     setTimeout(() => {
         if (loadingScreen && loadingScreen.style.display !== 'none') {
             console.warn("Loading timeout, forcing completion.");
@@ -763,70 +770,14 @@ window.addEventListener('load', () => {
             if (loadingPercentage) loadingPercentage.textContent = `100%`;
             finishLoading();
         }
-    }, 5000); 
+    }, 8000); 
 });
 
-// === 防拷貝與檢視原始碼邏輯 ===
+// ==========================================
+// 10. 防拷貝與檢視原始碼邏輯
+// ==========================================
 document.addEventListener('keydown', event => {
-    if (event.key === 'F12') {
-        event.preventDefault();
-    }
-    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'i') {
-        event.preventDefault();
-    }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') {
-        event.preventDefault();
-    }
+    if (event.key === 'F12') event.preventDefault();
+    if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'i') event.preventDefault();
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'u') event.preventDefault();
 });
-
-// === 新增：首頁 In-App 瀏覽器警告 Modal ===
-function checkAndShowInAppWarning() {
-    // 檢查是否在 In-App 瀏覽器，且 SessionStorage 中沒有記錄已看過警告
-    if (isInAppBrowser() && !sessionStorage.getItem('hasSeenInAppWarning')) {
-        const overlay = document.createElement('div');
-        overlay.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85); z-index: 99999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 25px; box-sizing: border-box;
-        `;
-
-        const modalContent = document.createElement('div');
-        modalContent.style.cssText = `
-            background: #FFF; border-radius: 16px; padding: 30px 25px;
-            width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            animation: slideUpFadeIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-        `;
-
-        modalContent.innerHTML = `
-            <div style="font-size: 40px; margin-bottom: 15px;">⚠️</div>
-            <h3 style="color: #D18A50; margin: 0 0 15px 0; font-size: 20px;">強烈建議開啟外部瀏覽器</h3>
-            <p style="color: #6E5C4F; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0; text-align: left;">
-                您目前正使用社群軟體內建的瀏覽器。<br><br>
-                為了確保稍後能<b>順利下載測驗結果圖</b>，強烈建議您現在點擊右上角的「...」，選擇<b>「以預設瀏覽器開啟」</b>（Safari / Chrome）。
-            </p>
-        `;
-
-        const closeBtn = document.createElement('button');
-        closeBtn.textContent = "我知道了，繼續測驗";
-        closeBtn.style.cssText = `
-            background: #D18A50; color: white; border: none; padding: 12px 25px;
-            border-radius: 24px; font-size: 16px; font-weight: bold; cursor: pointer;
-            width: 100%; transition: transform 0.2s;
-        `;
-        
-        closeBtn.onclick = () => {
-            // 記錄已看過，避免重新整理或重新測驗時一直跳出
-            sessionStorage.setItem('hasSeenInAppWarning', 'true');
-            document.body.removeChild(overlay);
-        };
-
-        modalContent.appendChild(closeBtn);
-        overlay.appendChild(modalContent);
-        document.body.appendChild(overlay);
-        
-        // 追蹤警告視窗的曝光
-        if(typeof gtag !== 'undefined') gtag('event', 'show_in_app_warning', { 'event_category': 'UX' });
-    }
-}
